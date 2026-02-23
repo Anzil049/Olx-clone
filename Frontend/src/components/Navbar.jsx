@@ -6,7 +6,7 @@ import SearchBar from "./SearchBar";
 const Navbar = () => {
     const { user, logout, hasRole } = useAuth();
     const navigate = useNavigate();
-    const [menuOpen, setMenuOpen] = useState(false); // controls mobile menu
+    const [menuOpen, setMenuOpen] = useState(false);
 
     const handleLogout = async () => {
         await logout();
@@ -15,25 +15,40 @@ const Navbar = () => {
 
     const closeMenu = () => setMenuOpen(false);
 
+    // Role checks — a user can have multiple roles so we check each separately
+    const isAdmin = hasRole("admin");
+    const isSellerOnly = hasRole("seller") && !isAdmin; // seller but NOT admin
+
+    // "Sell" and "My Ads" are only for sellers who are NOT admin or buyer-only
+    // Admin manages via dashboard, buyers have nothing to sell
+    const showSellerLinks = isSellerOnly;
+
     return (
         <nav className="navbar">
-            {/* Logo */}
             <Link to="/" className="navbar-logo">OLX</Link>
 
-            {/* Search — hidden on mobile, shown via CSS */}
             <div className="navbar-center">
                 <SearchBar />
             </div>
 
-            {/* Desktop Nav Links */}
+            {/* ── Desktop Nav ── */}
             <div className="navbar-actions">
                 {user ? (
                     <>
-                        {/* Sell button only visible to sellers and admins */}
-                        {(hasRole("seller") || hasRole("admin")) && (
-                            <Link to="/sell" className="btn-sell">+ Sell</Link>
+                        {/* Admin: show only Admin Dashboard link */}
+                        {isAdmin && (
+                            <Link to="/admin" className="nav-link nav-admin">⚙️ Admin</Link>
                         )}
-                        <Link to="/my-ads" className="nav-link">My Ads</Link>
+
+                        {/* Seller only (not admin, not buyer-only): show Sell + My Ads */}
+                        {showSellerLinks && (
+                            <>
+                                <Link to="/sell" className="btn-sell">+ Sell</Link>
+                                <Link to="/my-ads" className="nav-link">My Ads</Link>
+                            </>
+                        )}
+
+                        {/* Profile + Logout visible to everyone */}
                         <Link to="/profile" className="nav-avatar-link">
                             {user.avatar
                                 ? <img src={user.avatar} alt="avatar" className="nav-avatar" />
@@ -50,24 +65,25 @@ const Navbar = () => {
                 )}
             </div>
 
-            {/* Mobile Hamburger Button */}
-            <button
-                className="hamburger"
-                onClick={() => setMenuOpen(!menuOpen)}
-                aria-label="Toggle menu"
-            >
+            {/* ── Mobile Hamburger ── */}
+            <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
                 {menuOpen ? "✕" : "☰"}
             </button>
 
-            {/* Mobile Dropdown Menu */}
+            {/* ── Mobile Dropdown ── */}
             {menuOpen && (
                 <div className="mobile-menu">
                     {user ? (
                         <>
-                            {(hasRole("seller") || hasRole("admin")) && (
-                                <Link to="/sell" onClick={closeMenu}>+ Sell</Link>
+                            {isAdmin && (
+                                <Link to="/admin" onClick={closeMenu}>⚙️ Admin Dashboard</Link>
                             )}
-                            <Link to="/my-ads" onClick={closeMenu}>My Ads</Link>
+                            {showSellerLinks && (
+                                <>
+                                    <Link to="/sell" onClick={closeMenu}>+ Sell</Link>
+                                    <Link to="/my-ads" onClick={closeMenu}>My Ads</Link>
+                                </>
+                            )}
                             <Link to="/profile" onClick={closeMenu}>Profile</Link>
                             <button onClick={() => { handleLogout(); closeMenu(); }}>Logout</button>
                         </>
