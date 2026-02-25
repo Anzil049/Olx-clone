@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Single axios instance used for all API calls
 const api = axios.create({
-  baseURL: "/api", // vite proxy forwards this to http://localhost:5000/api
+  baseURL: import.meta.env.VITE_API_URL || "/api", // vite proxy forwards this to http://localhost:5000/api
 });
 
 // Automatically attach JWT token to every request
