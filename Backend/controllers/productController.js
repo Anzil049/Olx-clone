@@ -8,7 +8,14 @@ const getProducts = async (req, res) => {
 
     const query = { isActive: true }; // public only sees active listings
 
-    if (search) query.$text = { $search: search };
+    // With this:
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { category: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    };
     if (category) query.category = category;
     if (minPrice || maxPrice) {
       query.price = {};
@@ -132,7 +139,14 @@ const adminGetAllProducts = async (req, res) => {
 
     const query = {}; // no isActive filter — admin sees everything
 
-    if (search) query.$text = { $search: search };
+    // With this:
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { category: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    };
     if (category) query.category = category;
 
     // Optional filter by status from the dashboard UI

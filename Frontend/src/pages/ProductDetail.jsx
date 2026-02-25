@@ -92,10 +92,13 @@ const ProductDetail = () => {
                 </div>
 
                 {/* Contact — only show to logged-in users */}
+               
                 {user ? (
-                    <a href={`tel:${product.seller?.phone}`} className="btn-contact">
-                        📞 Contact Seller
-                    </a>
+                    !isOwner && (  // ← hide if current user is the seller
+                        <a href={`tel:${product.seller?.phone}`} className="btn-contact">
+                            📞 Contact Seller
+                        </a>
+                    )
                 ) : (
                     <button className="btn-contact" onClick={() => navigate("/login")}>
                         🔒 Login to See Contact

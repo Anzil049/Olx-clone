@@ -1,5 +1,8 @@
-import { createContext, useContext, useReducer } from "react";
+import { createContext, useContext, useReducer, useEffect } from "react";
 import api from "../utils/api";
+import { saveToken, getToken, clearToken } from "../utils/tokenStorage"; // ✅ add this
+
+
 
 // ─── Reducer ────────────────────────────────────────────────────────────────
 // All state changes happen here — keeps logic in one place
@@ -8,7 +11,7 @@ const authReducer = (state, action) => {
         case "LOADING":
             return { ...state, loading: true, error: null };
         case "SUCCESS":
-            return { ...state, loading: false, user: action.payload, token: action.payload.token, error: null };
+            return { ...state, loading: false, user: action.payload, token: action.payload.token ?? state.token, error: null };
         case "ERROR":
             return { ...state, loading: false, error: action.payload };
         case "UPDATE":
@@ -29,7 +32,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [state, dispatch] = useReducer(authReducer, {
         user: null,
-        token: localStorage.getItem("token") || null, // rehydrate token on page refresh
+        token: getToken(), // rehydrate token on page refresh
         loading: false,
         error: null,
     });
@@ -39,7 +42,7 @@ export const AuthProvider = ({ children }) => {
         dispatch({ type: "LOADING" });
         try {
             const res = await api.post("/auth/register", formData);
-            localStorage.setItem("token", res.data.token);
+            saveToken(res.data.token);
             dispatch({ type: "SUCCESS", payload: res.data });
             return true;
         } catch (err) {
@@ -48,12 +51,31 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // Add fetchMe function inside AuthProvider
+    const fetchMe = async () => {
+        const token = getToken();
+        if (!token) return; // no token, skip
+        dispatch({ type: "LOADING" });
+        try {
+            const res = await api.get("/auth/me"); // your get current user endpoint
+            dispatch({ type: "SUCCESS", payload: res.data });
+        } catch (err) {
+            clearToken();
+            dispatch({ type: "LOGOUT" }); // token invalid, clear everything
+        }
+    };
+
+    // Call it once when app starts
+    useEffect(() => {
+        fetchMe();
+    }, []); // ← empty array = runs only once on mount
+
     // Login existing user
     const login = async (formData) => {
         dispatch({ type: "LOADING" });
         try {
             const res = await api.post("/auth/login", formData);
-            localStorage.setItem("token", res.data.token);
+            saveToken(res.data.token);
             dispatch({ type: "SUCCESS", payload: res.data });
             return true;
         } catch (err) {
@@ -68,7 +90,7 @@ export const AuthProvider = ({ children }) => {
             await api.post("/auth/logout");
         } finally {
             // Always clear even if server call fails
-            localStorage.removeItem("token");
+            clearToken();
             dispatch({ type: "LOGOUT" });
         }
     };

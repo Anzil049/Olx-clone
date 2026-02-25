@@ -1,15 +1,23 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
-// Controlled search input — on submit, navigates to /?search=query
 const SearchBar = () => {
     const [query, setQuery] = useState("");
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+
+    // Sync the input value with the URL (so if the URL search clears, the input clears)
+    useEffect(() => {
+        setQuery(searchParams.get("search") || "");
+    }, [searchParams]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (query.trim()) {
             navigate(`/?search=${encodeURIComponent(query.trim())}`);
+        } else {
+            // FIX: If the search is empty, navigate back to all products
+            navigate(`/`); 
         }
     };
 
@@ -17,7 +25,7 @@ const SearchBar = () => {
         <form className="search-bar" onSubmit={handleSubmit}>
             <input
                 type="text"
-                placeholder="Search cars, phones, furniture..."
+                placeholder="Search..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
             />

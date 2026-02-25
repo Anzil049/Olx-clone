@@ -49,15 +49,15 @@ export const ProductProvider = ({ children }) => {
     // Important for useEffect dependency arrays
 
     // Fetch all products with optional filters (search, category, price, sort, page)
-    const fetchProducts = useCallback(async (params = {}) => {
-        dispatch({ type: "LOADING" });
-        try {
-            const res = await api.get("/products", { params }); // params → ?search=phone&category=Mobiles
-            dispatch({ type: "SET_LIST", payload: res.data });
-        } catch (err) {
-            dispatch({ type: "ERROR", payload: err.response?.data?.message || "Failed to load products" });
-        }
-    }, []);
+  const fetchProducts = useCallback(async (params = {}) => {
+    dispatch({ type: "LOADING" });
+    try {
+        const res = await api.get("/products", { params });
+        dispatch({ type: "SET_LIST", payload: res.data });
+    } catch (err) {
+        dispatch({ type: "ERROR", payload: err.response?.data?.message || "Failed to load products" });
+    }
+}, []);
 
     // Fetch a single product by ID
     const fetchProductById = useCallback(async (id) => {
